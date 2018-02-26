@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link href="app.stylus" rel="stylesheet" type="text/css" />
+    <title>HTM</title>
+  </head>
+  <body>
+    <script type="text/x-template" id="item-template">
+      <li>
+        <div class="tree-label">
+          <span v-on:click="clickHandle($event)">{{ model.name }}</span>
+          <span v-on:click="toggle(model)" v-show="model.children.length">[{{open ? ' - ' : ' + '}}]</span>
+        </div>
+
+        <ul v-show="open" v-if="model.children">
+          <item v-for="item in model.children" :model="item"></item>
+        </ul>
+      </li>
+    </script>
+
+    <div class="app">
+      <div class="app-left">
+
+        <div id="tree">
+          <h1>{{ message }}</h1>
+          <ul>
+            <item v-for="item in list" :model="item"></item>  
+          </ul>
+        </div>
+
+      </div>
+      <div class="app-right" id="right">
+        <div id="chart1">
+          <canvas id="chart1" height="300"></canvas>          
+        </div>
+      </div>
+    </div>
+
+    <script src="./vue.min.js"></script>
+    <script src="./d3.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
