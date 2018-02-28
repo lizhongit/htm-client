@@ -1,0 +1,79 @@
+* {
+  margin: 0;
+  padding: 0;
+  outline: none;
+}
+html {
+  height: 100%;
+}
+body {
+  background-color: #fff;
+  height: 100%;
+  font: 1.1em/1.5 Helvetica, Microsoft YaHei, Arial, sans-serif;
+}
+.app {
+  display: flex;
+  height: 100%;
+}
+.app .app-left {
+  width: 300px;
+  height: 100%;
+  overflow: auto;
+  background-color: #f5f5f5;
+}
+.app .app-right {
+  width: 100%;
+  margin-left: 10px;
+  padding: 10px;
+}
+.app .box1 {
+  position: relative;
+}
+.app .box2 {
+  margin-top: 20px;
+  position: relative;
+  border: 1px solid #f5f5f5;
+}
+.app .box2 .leftBg,
+.app .box2 .rightBg {
+  background-color: rgba(0,0,0,0.7);
+  position: absolute;
+  height: 100%;
+  top: 0;
+}
+.app .box2 .leftBg {
+  left: 0;
+}
+.app .box2 .rightBg {
+  right: 0;
+}
+.app .box2 .bar {
+  cursor: move;
+  width: 100px;
+  left: 30%;
+  top: 0;
+  height: 100%;
+  position: absolute;
+  z-index: 999999;
+}
+.app .box2 .drag {
+  background-color: rgba(234,56,109,0);
+  cursor: ew-resize;
+  width: 5px;
+  left: 30%;
+  top: 0;
+  height: 100%;
+  z-index: 9;
+  position: absolute;
+}
+#tree {
+  padding: 10px;
+}
+#tree ul {
+  padding-left: 1em;
+  line-height: 1.5em;
+  list-style-type: dot;
+}
+#tree .tree-label {
+  cursor: pointer;
+}
