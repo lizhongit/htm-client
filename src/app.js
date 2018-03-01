@@ -18,7 +18,7 @@ let app = (() => {
   let dragW = 6
 
   let barMaxWidth = 0
-  let barWidthMin = 100
+  let barWidthMin = 20
   let barW = 200
   let barX = 200
   let leftDragX = 0
@@ -91,18 +91,27 @@ let app = (() => {
     let itemH = cH / (max - min)
     let x = 0
     let y = (offset - (list[0].actual - min)) * itemH
+    let lastX = 0
+    let lastY = 0
     ctx.moveTo(x, y)
 
     for (let i = 1; i < list.length; i++) {
       x = i * itemW
       y = (offset - (list[i].actual - min)) * itemH
-      ctx.lineTo(x, y)
+      
+      if (Math.abs(lastX - x) >= 1 || Math.abs(lastY - y) >= 1) {
+        ctx.lineTo(x, y) 
+        lastX = x
+        lastY = y       
+      }
     }
     ctx.stroke()
 
     ctx.strokeStyle = 'blue'
     ctx.beginPath()
     let isDraw = false
+    lastX = 0
+    lastY = 0
 
     for (let i = 0; i < list.length; i++) {
       if (typeof list[i].predict === 'number') {
@@ -110,8 +119,11 @@ let app = (() => {
         y = (offset - (list[i].predict - min)) * itemH
 
         if (isDraw) {
-          ctx.lineTo(x, y)
-          // console.log(x, y)
+          if (Math.abs(lastX - x) >= 1 || Math.abs(lastY - y) >= 1) {
+            ctx.lineTo(x, y) 
+            lastX = x
+            lastY = y       
+          }
         } else {
           ctx.moveTo(x, y)
           isDraw = true
@@ -146,16 +158,22 @@ let app = (() => {
     let start = barX > 0 ? Math.floor(list.length * (barX / barMaxWidth)) : 0
     let end = Math.min(start + Math.ceil(list.length * (barW / barMaxWidth)), list.length)
 
+    // let start = 10
+    // let end = 35
+
     let fontSize = 10
     let paddingTop = 20
     
     let xAxisHeight = 100
     let tickWidth = 10
-    let yTickItemWidth = 100
+    let yTickItemWidth = 150
 
     let barWidth = 10
     let chart1 = document.querySelector('#chart1')
     let width = 0
+
+    let lastX = 0
+    let lastY = 0
 
     if (!isInit) {
       let cs = getComputedStyle(rightEl)      
@@ -170,13 +188,8 @@ let app = (() => {
 
     let cH = chart1.clientHeight - xAxisHeight - paddingTop
     let cW = chart1.clientWidth - yAxisWidth
-    let yTickCount = Math.floor(cW / yTickItemWidth)
 
     ctx.clearRect(0, 0, 9999999, 9999999)
-
-    ctx.strokeStyle = 'red'
-    ctx.lineWidth = 1
-    ctx.beginPath()
 
     let min = 99999999
     let max = 0
@@ -199,41 +212,8 @@ let app = (() => {
 
     let itemW = cW / (end - start)
     let itemH = cH / (max - min)
-
-    let x = yAxisWidth
-    let y = (offset - (list[start].actual - min)) * itemH + paddingTop
-    ctx.moveTo(x, y)
-
-    for (let i = start + 1; i < end; i++) {
-      x = (i - start - 1) * itemW + yAxisWidth
-      y = (offset - (list[i].actual - min)) * itemH + paddingTop
-      ctx.lineTo(x, y)
-    }
-    ctx.stroke()
-
-    ctx.strokeStyle = 'blue'
-    ctx.lineWidth = 1
-    ctx.beginPath()
-    let isDraw = false
-
-    for (let i = start; i < end; i++) {
-      if (typeof list[i].predict === 'number') {
-        x = (i - start) * itemW + yAxisWidth
-        y = (offset - (list[i].predict - min)) * itemH + paddingTop
-
-        if (isDraw) {
-          ctx.lineTo(x, y)
-          // console.log(x, y)
-        } else {
-          ctx.moveTo(x, y)
-          isDraw = true
-        }
-      } else {
-        isDraw = false
-      }
-    }
-
-    ctx.stroke()
+    let y = 0
+    let x = 0
 
     // Y
     ctx.strokeStyle = '#999'
@@ -266,13 +246,14 @@ let app = (() => {
 
     ctx.stroke()
 
-    let spl = Math.floor((end - start) / yTickCount / 2)
-
+    let yTickCount = Math.floor(Math.max(yTickItemWidth / itemW, 1))
+    let spl = Math.ceil((end - start) / yTickCount)
+    
     ctx.strokeStyle = '#F5F5F5'
     ctx.beginPath()
-    for (let i = 0; i < yTickCount * 2; i++) {
-      if (i % 2 === 1) {
-        x = i * spl * itemW + yAxisWidth
+    for (let i = 0; i < end - start; i++) {
+      if (i % yTickCount === 0) {
+        x = i * itemW + yAxisWidth
         ctx.moveTo(x, paddingTop)
         ctx.lineTo(x, paddingTop + cH + pt)
       }
@@ -281,14 +262,14 @@ let app = (() => {
 
     ctx.beginPath()    
     ctx.strokeStyle = '#999'
-    for (let i = 0; i < yTickCount * 2; i++) {
-      if (i % 2 === 1) {
-        let index = i * spl
-        x = index * itemW + yAxisWidth
+    for (let i = 0; i < end - start; i++) {
+      if (i % yTickCount === 0) {
+        let index = i + start
+        x = i * itemW + yAxisWidth
         ctx.moveTo(x, xAxisY)
         ctx.lineTo(x, xAxisY + tickWidth)
-        let text = list[index + start].time.substr(0, list[index + start].time.length - 3)
-        ctx.fillText(text, x - spl * itemW + 10, xAxisY + tickWidth * 3)
+        let text = list[index].time.substr(0, list[index].time.length - 3)
+        ctx.fillText(text, x - 40, xAxisY + tickWidth * 3)
       }
     }
     ctx.stroke()
@@ -296,7 +277,7 @@ let app = (() => {
     // BAR
     let barSpace = 2
     let bCount = Math.floor(cW / (barWidth + barSpace))
-    let batch = Math.max(Math.floor((end - start) / bCount), 1)
+    let batch = Math.ceil((end - start) / bCount)
 
     let barH = 50
     let maxV = 0
@@ -304,18 +285,13 @@ let app = (() => {
     pt = 10
     xAxisY = cH + paddingTop + pt
     
-    for (let i = start; i < end; i++) {
-      if (typeof list[i].abnormalScore === 'number') {
+    for (let i = start; i <= end; i++) {
+      if (list[i] && typeof list[i].abnormalScore === 'number') {
         maxV = Math.max(list[i].abnormalScore, maxV)
       }
 
-      if ((i - start) > 0 && ((i - start) % batch === 0 || end - 1 === i)) {
-        count++
-        if (end - 1 === i) {
-          x = count * (barWidth + 2) - (Math.floor(barWidth * ((end - i) % batch / batch)))
-        } else {
-          x = count * (barWidth + 2) + yAxisWidth - (barWidth + 1)
-        }
+      if ((i - start) > 0 && ((i - start) % batch === 0 || end === i)) {
+        x = count * (barWidth + 2) + yAxisWidth + barSpace / 2
 
         ctx.fillStyle = 'green'
         let h = barH * Math.max(maxV, 0.4)
@@ -328,10 +304,63 @@ let app = (() => {
 
         ctx.fillRect(x, xAxisY + (barH - h), barWidth, h)
         maxV = 0
+        count++        
       }
     }
 
     ctx.fillStyle = '#999'
+
+    ctx.strokeStyle = 'red'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+
+    x = yAxisWidth
+    y = (offset - (list[start].actual - min)) * itemH + paddingTop
+    ctx.moveTo(x, y)
+
+    for (let i = start + 1; i < end; i++) {
+      x = (i - start) * itemW + yAxisWidth
+      y = (offset - (list[i].actual - min)) * itemH + paddingTop
+
+      if (Math.abs(lastX - x) >= 1 || Math.abs(lastY - y) >= 1) {
+        ctx.lineTo(x, y)  
+        lastX = x
+        lastY = y
+      }
+    }
+    ctx.stroke()
+
+    ctx.strokeStyle = 'blue'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    let isDraw = false
+    lastX = 0
+    lastY = 0
+
+    for (let i = start; i < end; i++) {
+      if (typeof list[i].predict === 'number') {
+        x = (i - start) * itemW + yAxisWidth
+        y = (offset - (list[i].predict - min)) * itemH + paddingTop
+
+        if (isDraw) {          
+          if (Math.abs(lastX - x) >= 1 || Math.abs(lastY - y) >= 1) {
+            ctx.lineTo(x, y)
+            lastX = x
+            lastY = y
+          }
+          // console.log(x, y)
+        } else {
+          ctx.moveTo(x, y)
+          isDraw = true
+        }
+      } else {
+        isDraw = false
+      }
+    }
+
+    ctx.stroke()
+    lastX = 0
+    lastY = 0
   }
 
   const getChartData = async (arr) => {
