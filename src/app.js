@@ -364,6 +364,7 @@ let app = (() => {
   }
 
   const getChartData = async (arr) => {
+    document.querySelector('#h1').innerHTML = 'Loading...'    
     let d = new Date()
     let endTime = getDate(d)
     // d.setMonth(d.getMonth() - 1)
@@ -382,6 +383,7 @@ let app = (() => {
     let r = await fetch('/api/htm/getPerfAndPredict', { method: 'POST', body })
     let json = await r.json()
     list = json
+    document.querySelector('#h1').innerHTML = arr.join(' > ')
     initChart2()
   }
 
